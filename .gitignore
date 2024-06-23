@@ -1,0 +1,13 @@
+vgcore.*
+*.lib
+*.so
+*.a
+*.o
+a.out
+build
+csv
+pg
+.env
+.env.local
+.env.*
+eclinic
