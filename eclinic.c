@@ -462,7 +462,19 @@ int main(int argc, char *argv[]) {
     flag_add_string(ctx, .name = "env", .value = &env, .desc = "dotenv file with pg env vars");
 
     // -----------------------------------
-    flag_add_subcommand(ctx, "psql", "Initialize the database schema", start_psql_prompt, 1);
+    flag_add_subcommand(ctx, "psql", "Start psql prompt session", start_psql_prompt, 1);
+
+    // -------------------------------------
+
+    flag_add_subcommand(ctx, "csu", "Create superuser", create_superuser, 1);
+
+    // ---------------------------------------
+    flag_add_subcommand(ctx, "init", "Initialize eclinic", init_eclinic, 1);
+
+    // -------------------------------------------------------------
+    subcommand *uploadcmd =
+        flag_add_subcommand(ctx, "upload", "Upload items to inventory", upload_inventory, 1);
+    subcommand_add_flag(uploadcmd, FLAG_STRING, "file", "Price list file", &dxcat_file, true);
 
     // -----------------------------------
     subcommand *initcmd =
@@ -482,18 +494,6 @@ int main(int argc, char *argv[]) {
                         false);
     subcommand_add_flag(dxcatcmd, FLAG_BOOL, "incremental", "Incremental upload", &incremental,
                         false);
-
-    // -------------------------------------
-
-    flag_add_subcommand(ctx, "csu", "Create superuser", create_superuser, 1);
-
-    // ---------------------------------------
-    flag_add_subcommand(ctx, "init", "Initialize eclinic", init_eclinic, 1);
-
-    // -------------------------------------------------------------
-    subcommand *uploadcmd =
-        flag_add_subcommand(ctx, "upload", "Upload items to inventory", upload_inventory, 1);
-    subcommand_add_flag(uploadcmd, FLAG_STRING, "file", "Price list file", &dxcat_file, true);
 
     // ==================== Parse the flags ==========================================
     subcommand *subcmd = parse_flags(ctx, argc, argv);
