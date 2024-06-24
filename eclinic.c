@@ -1,3 +1,5 @@
+#define MAX_SUBCOMMANDS 10
+
 #include <csvparser.h>
 #include <libpq-fe.h>
 #include <solidc/flag.h>
@@ -12,12 +14,15 @@
 #include "log.h"
 
 // Global flags to the CLI.
-char *env = ".env";          // dotenv file
-char *schema_file = NULL;    // schema.sql file
-char *enums_file = NULL;     // enums.sql file.
-char *dxcat_file = NULL;     // Diagnosis categories csv file.
-bool csv_has_header = false; // CSV has a header
-bool incremental = false;    // Ignore COPY and upload one by one to avoid unique constraints
+char *env = ".env";              // dotenv file
+char *schema_file = NULL;        // schema.sql file
+char *enums_file = NULL;         // enums.sql file.
+char *dxcat_file = NULL;         // Diagnosis categories csv file.
+char *inventory_csv_file = NULL; // Inventory csv file
+char *invoices_csv = NULL;       // Invoices csv file
+char *user_accounts_csv = NULL;  // User accounts csv file
+bool csv_has_header = false;     // CSV has a header
+bool incremental = false;        // Ignore COPY and upload one by one to avoid unique constraints
 
 // Global variables that need to be freed on success or error.
 flag_ctx *ctx = NULL; // Flag context
@@ -131,7 +136,7 @@ static void init_schema(FlagArgs args) {
     runpsql_script(schema_file);
 }
 
-static void init_enums(FlagArgs args) {
+void init_enums(FlagArgs args) {
     (void)args;
     if (enums_file == NULL) {
         LOG_FATAL("Enums file is required");
@@ -140,7 +145,7 @@ static void init_enums(FlagArgs args) {
     runpsql_script(enums_file);
 }
 
-static void load_diagnosis_categories(FlagArgs args) {
+void load_diagnosis_categories(FlagArgs args) {
     (void)args;
     if (dxcat_file == NULL) {
         LOG_FATAL("Diagnosis categories file is required");
@@ -212,7 +217,7 @@ static void load_diagnosis_categories(FlagArgs args) {
 
 void upload_inventory(FlagArgs args) {
     (void)args;
-    CsvParser *parser = csvparser_new(dxcat_file);
+    CsvParser *parser = csvparser_new(inventory_csv_file);
     if (!parser) {
         LOG_FATAL("failed to initialize csv parser");
     }
@@ -225,6 +230,42 @@ void upload_inventory(FlagArgs args) {
 
     size_t numrows = csvparser_numrows(parser);
     save_inventory_items(rows, numrows);
+    csvparser_free(parser);
+}
+
+void upload_invoices_csv(FlagArgs args) {
+    (void)args;
+    CsvParser *parser = csvparser_new(invoices_csv);
+    if (!parser) {
+        LOG_FATAL("failed to initialize csv parser");
+    }
+
+    csvparser_setconfig(parser, (CsvConfig){.has_header = true, .skip_header = true});
+    CsvRow **rows = csvparser_parse(parser);
+    if (!rows) {
+        LOG_FATAL("csvparser_parse() failed");
+    }
+
+    size_t numrows = csvparser_numrows(parser);
+    upload_invoices(rows, numrows);
+    csvparser_free(parser);
+}
+
+void upload_user_accounts_csv(FlagArgs args) {
+    (void)args;
+    CsvParser *parser = csvparser_new(user_accounts_csv);
+    if (!parser) {
+        LOG_FATAL("failed to initialize csv parser");
+    }
+
+    csvparser_setconfig(parser, (CsvConfig){.has_header = true, .skip_header = true});
+    CsvRow **rows = csvparser_parse(parser);
+    if (!rows) {
+        LOG_FATAL("csvparser_parse() failed");
+    }
+
+    size_t numrows = csvparser_numrows(parser);
+    upload_users(rows, numrows);
     csvparser_free(parser);
 }
 
@@ -472,9 +513,21 @@ int main(int argc, char *argv[]) {
     flag_add_subcommand(ctx, "init", "Initialize eclinic", init_eclinic, 1);
 
     // -------------------------------------------------------------
-    subcommand *uploadcmd =
-        flag_add_subcommand(ctx, "upload", "Upload items to inventory", upload_inventory, 1);
-    subcommand_add_flag(uploadcmd, FLAG_STRING, "file", "Price list file", &dxcat_file, true);
+    subcommand *uploadcmd = flag_add_subcommand(
+        ctx, "upload", "Upload items to eclinichms inventory", upload_inventory, 1);
+    subcommand_add_flag(uploadcmd, FLAG_STRING, "file", "Price list file", &inventory_csv_file,
+                        true);
+
+    // -----------------------------------
+    subcommand *invoices_cmd = flag_add_subcommand(ctx, "invoices", "Upload invoices to eclinichms",
+                                                   upload_invoices_csv, 1);
+    subcommand_add_flag(invoices_cmd, FLAG_STRING, "file", "csv file for invoices", &invoices_csv,
+                        true);
+
+    subcommand *users_cmd =
+        flag_add_subcommand(ctx, "users", "Upload user accounts", upload_user_accounts_csv, 1);
+    subcommand_add_flag(users_cmd, FLAG_STRING, "file", "csv file for user accounts",
+                        &user_accounts_csv, true);
 
     // -----------------------------------
     subcommand *initcmd =
@@ -486,14 +539,15 @@ int main(int argc, char *argv[]) {
         flag_add_subcommand(ctx, "enums", "Initialize the database enums", init_enums, 1);
     subcommand_add_flag(enumcmd, FLAG_STRING, "file", "Enums file", &enums_file, true);
     // ------------------------------------
-    subcommand *dxcatcmd = flag_add_subcommand(ctx, "dxcat", "Load diagnosis categories",
-                                               load_diagnosis_categories, 3);
-    subcommand_add_flag(dxcatcmd, FLAG_STRING, "file", "Diagnosis categories file", &dxcat_file,
-                        true);
-    subcommand_add_flag(dxcatcmd, FLAG_BOOL, "header", "CSV File contains header", &csv_has_header,
-                        false);
-    subcommand_add_flag(dxcatcmd, FLAG_BOOL, "incremental", "Incremental upload", &incremental,
-                        false);
+    // subcommand *dxcatcmd = flag_add_subcommand(ctx, "dxcat", "Load diagnosis categories",
+    //                                            load_diagnosis_categories, 3);
+    // subcommand_add_flag(dxcatcmd, FLAG_STRING, "file", "Diagnosis categories file", &dxcat_file,
+    //                     true);
+    // subcommand_add_flag(dxcatcmd, FLAG_BOOL, "header", "CSV File contains header",
+    // &csv_has_header,
+    //                     false);
+    // subcommand_add_flag(dxcatcmd, FLAG_BOOL, "incremental", "Incremental upload", &incremental,
+    //                     false);
 
     // ==================== Parse the flags ==========================================
     subcommand *subcmd = parse_flags(ctx, argc, argv);
