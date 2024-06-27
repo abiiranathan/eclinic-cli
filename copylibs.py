@@ -16,12 +16,15 @@ if not os.path.exists(BINARY):
     print(f"File not found: {BINARY}")
     sys.exit(1)
 
-with open("/tmp/libs.txt", "w") as f:
+with open("/tmp/libs.txt", "r+") as f:
     code = subprocess.call(["ldd", BINARY], stdout=f)
     if code != 0:
         sys.exit(1)
 
-with open("/tmp/libs.txt", "r") as f:
+    # Flush and reset to beginning
+    f.flush()
+    f.seek(0)
+
     for line in f.readlines():
         parts = line.strip().split(" => ")
         if len(parts) != 2:
@@ -31,7 +34,7 @@ with open("/tmp/libs.txt", "r") as f:
         path, _ = parts[1].split(" ")
 
         if not os.path.exists(path):
-            print("shared object not found: {path}")
+            print(f"shared object not found: {path}")
             sys.exit(1)
 
         abspath = os.path.join(DEST, os.path.basename(path))
