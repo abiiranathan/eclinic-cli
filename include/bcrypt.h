@@ -5,7 +5,7 @@
 // sudo pacman -S libxcrypt
 
 // Hash user passwords using bcrypt
-#include "libbcrypt/bcrypt.h"
+#include "../libbcrypt/bcrypt.h"
 #include <stdbool.h>
 
 // Hash user passwords using bcrypt.

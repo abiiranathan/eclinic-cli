@@ -11,3 +11,5 @@ pg
 .env.local
 .env.*
 eclinic
+bin
+obj

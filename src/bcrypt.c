@@ -1,4 +1,4 @@
-#include "bcrypt.h"
+#include "../include/bcrypt.h"
 
 // Hash user passwords using bcrypt.
 // The hash is stored in the hash buffer. Returns true if successful.
