@@ -79,7 +79,7 @@ void upload_user_accounts_csv(Subcommand *cmd) {
         LOG_FATAL("failed to initialize csv parser");
     }
 
-    csvparser_setconfig(parser, (CsvConfig){.has_header = true, .skip_header = true});
+    csvparser_setconfig(parser, (CsvParserConfig){.has_header = true, .skip_header = true});
     CsvRow **rows = csvparser_parse(parser);
     if (!rows) {
         LOG_FATAL("csvparser_parse() failed");

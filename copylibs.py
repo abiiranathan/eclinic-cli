@@ -16,7 +16,7 @@ if not os.path.exists(BINARY):
     print(f"File not found: {BINARY}")
     sys.exit(1)
 
-with open("/tmp/libs.txt", "r+") as f:
+with open("/tmp/libs.txt", "w+") as f:
     code = subprocess.call(["ldd", BINARY], stdout=f)
     if code != 0:
         sys.exit(1)

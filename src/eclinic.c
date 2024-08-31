@@ -35,14 +35,16 @@ void runpsql_script(const char *filename) {
     const char *env[] = {NULL};
 
     Process psql;
+    int status = -1;
     int ret;
     ret = process_create(&psql, "psql", argv, env);
     if (ret != 0) {
         LOG_FATAL("Failed to create process");
     }
-    process_wait(&psql, &ret);
+
+    ret = process_wait(&psql, &status);
     if (ret != 0) {
-        LOG_FATAL("Process failed with exit code: %d", ret);
+        LOG_FATAL("Process failed with exit code: %d", status);
     }
 }
 

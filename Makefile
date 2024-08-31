@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-Wall -Werror -Wextra -pedantic -std=c2x -O3 -s
-LDFLAGS=-lm -lcsvparser -lsolidc -lpq -Wl,-rpath=./libs
+LDFLAGS=-lm -lsolidc -lpq -Wl,-rpath=./libs
 
 SRC_DIR=src
 OBJ_DIR=obj

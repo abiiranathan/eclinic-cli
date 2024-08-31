@@ -1,4 +1,5 @@
 #include "../include/common.h"
+#include <solidc/cstr.h>
 #include <solidc/process.h>
 
 void upload_diagnosis_categories(Subcommand *cmd) {
@@ -20,8 +21,8 @@ void upload_diagnosis_categories(Subcommand *cmd) {
             LOG_FATAL("failed to initialize csv parser");
         }
 
-        csvparser_setconfig(parser,
-                            (CsvConfig){.has_header = *has_header, .skip_header = *has_header});
+        csvparser_setconfig(
+            parser, (CsvParserConfig){.has_header = *has_header, .skip_header = *has_header});
 
         CsvRow **rows = csvparser_parse(parser);
         if (!rows) {

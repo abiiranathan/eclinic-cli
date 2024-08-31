@@ -2,11 +2,13 @@
 #define D9C2C375_862B_4276_A8AE_DCB27A42339B
 #define _GNU_SOURCE 1
 
-#include "../include/log.h"
-#include <csvparser.h>
+#include <assert.h>
+#include <libpq-fe.h>
+#include <solidc/arena.h>
+#include <solidc/csvparser.h>
 #include <solidc/flag.h>
 
-#include <libpq-fe.h>
+#include "../include/log.h"
 #include <stdlib.h>
 
 extern PGconn *conn;
